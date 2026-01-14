@@ -4,6 +4,14 @@ import { getDocumentBySlug } from '@/data/documents'
 
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier si OpenAI est configuré
+    if (!openai) {
+      return NextResponse.json(
+        { message: 'Assistant IA non disponible pour le moment. Veuillez utiliser le formulaire.', collectedData: {}, isComplete: false },
+        { status: 503 }
+      )
+    }
+
     const { messages, documentType, collectedData } = await request.json()
 
     const document = getDocumentBySlug(documentType)
