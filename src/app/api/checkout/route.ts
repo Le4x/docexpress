@@ -4,12 +4,19 @@ import { getDocumentBySlug } from '@/data/documents'
 
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier si Stripe est configuré
+    if (!stripe) {
+      return NextResponse.json({ error: 'Paiement non disponible' }, { status: 503 })
+    }
+
     const { documentSlug, formData, email } = await request.json()
 
     const document = getDocumentBySlug(documentSlug)
     if (!document) {
       return NextResponse.json({ error: 'Document non trouvé' }, { status: 404 })
     }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -27,8 +34,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/documents/${documentSlug}`,
+      success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/documents/${documentSlug}`,
       customer_email: email,
       metadata: {
         documentSlug,
