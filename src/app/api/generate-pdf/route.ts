@@ -45,8 +45,11 @@ export async function GET(request: NextRequest) {
     // Générer le buffer PDF
     const pdfBuffer = await renderToBuffer(pdfDocument)
 
+    // Convertir en Uint8Array pour NextResponse
+    const uint8Array = new Uint8Array(pdfBuffer)
+
     // Retourner le PDF
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(uint8Array, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${documentSlug}.pdf"`,
