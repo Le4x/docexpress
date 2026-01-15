@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
-import { LettreDemissionCDI, ResiliationBox, PreavisLogement } from '@/lib/pdf-templates'
+import { LettreDemissionCDI, ResiliationBox, PreavisLogement, GenericDocument } from '@/lib/pdf-templates'
 import { stripe } from '@/lib/stripe'
+import { getDocumentBySlug } from '@/data/documents'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +10,10 @@ export async function GET(request: NextRequest) {
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID manquant' }, { status: 400 })
+    }
+
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe non configuré' }, { status: 503 })
     }
 
     // Récupérer la session Stripe
@@ -25,6 +30,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
     }
 
+    const documentInfo = getDocumentBySlug(documentSlug)
+
     // Générer le PDF selon le type de document
     let pdfDocument
 
@@ -39,7 +46,9 @@ export async function GET(request: NextRequest) {
         pdfDocument = PreavisLogement(formData)
         break
       default:
-        return NextResponse.json({ error: 'Type de document inconnu' }, { status: 400 })
+        // Utiliser le template générique pour tous les autres documents
+        pdfDocument = GenericDocument(formData, documentInfo?.title || 'Document')
+        break
     }
 
     // Générer le buffer PDF

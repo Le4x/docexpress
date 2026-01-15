@@ -328,3 +328,84 @@ export function PreavisLogement(data: PreavisLogementProps) {
     </Document>
   )
 }
+
+// Template générique pour tous les documents
+interface GenericDocumentProps {
+  [key: string]: string
+}
+
+export function GenericDocument(data: GenericDocumentProps, title: string) {
+  const today = new Date().toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+  // Extraire les infos de base
+  const prenom = data.prenom || data.prenomHebergeur || data.prenomParent || ''
+  const nom = data.nom || data.nomHebergeur || data.nomParent || ''
+  const adresse = data.adresse || ''
+  const codePostal = data.codePostal || ''
+  const ville = data.ville || ''
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Expéditeur */}
+        <View style={styles.senderInfo}>
+          <Text style={styles.senderName}>{prenom} {nom}</Text>
+          {adresse && <Text>{adresse}</Text>}
+          {(codePostal || ville) && <Text>{codePostal} {ville}</Text>}
+        </View>
+
+        {/* Date et lieu */}
+        <View style={styles.date}>
+          <Text>{ville}, le {today}</Text>
+        </View>
+
+        {/* Objet */}
+        <Text style={styles.subject}>Objet : {title}</Text>
+
+        {/* Corps */}
+        <View style={styles.body}>
+          <Text>Madame, Monsieur,</Text>
+        </View>
+
+        <View style={styles.body}>
+          <Text>
+            Par la présente, je vous adresse ce document concernant : {title.toLowerCase()}.
+          </Text>
+        </View>
+
+        {/* Afficher toutes les données du formulaire */}
+        <View style={styles.body}>
+          {Object.entries(data).map(([key, value]) => {
+            if (value && !['prenom', 'nom', 'adresse', 'codePostal', 'ville'].includes(key)) {
+              const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+              return (
+                <Text key={key} style={{ marginBottom: 5 }}>
+                  • {label} : {value}
+                </Text>
+              )
+            }
+            return null
+          })}
+        </View>
+
+        <View style={styles.body}>
+          <Text>
+            Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+          </Text>
+        </View>
+
+        {/* Signature */}
+        <View style={styles.signature}>
+          <Text style={styles.signatureName}>{prenom} {nom}</Text>
+          <Text style={{ marginTop: 30, fontStyle: 'italic', color: '#666' }}>
+            (Signature)
+          </Text>
+        </View>
+      </Page>
+    </Document>
+  )
+}

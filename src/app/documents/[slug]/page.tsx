@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { getDocumentBySlug } from '@/data/documents'
 import DocumentForm from '@/components/DocumentForm'
@@ -9,13 +9,13 @@ import ChatAssistant from '@/components/ChatAssistant'
 
 export default function DocumentPage() {
   const params = useParams()
-  const router = useRouter()
   const slug = params.slug as string
   const document = getDocumentBySlug(slug)
   
   const [mode, setMode] = useState<'form' | 'chat'>('form')
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [formData, setFormData] = useState<Record<string, string> | null>(null)
 
   if (!document) {
@@ -39,10 +39,35 @@ export default function DocumentPage() {
     setFormData(data)
   }
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value)
+    if (emailError && validateEmail(value)) {
+      setEmailError('')
+    }
+  }
+
   const handlePayment = async () => {
-    if (!formData || !email) return
+    if (!formData) return
     
+    // Validation email
+    if (!email) {
+      setEmailError('Veuillez entrer votre adresse email')
+      return
+    }
+    
+    if (!validateEmail(email)) {
+      setEmailError('Veuillez entrer une adresse email valide (ex: nom@exemple.fr)')
+      return
+    }
+
+    setEmailError('')
     setIsLoading(true)
+    
     try {
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -54,9 +79,14 @@ export default function DocumentPage() {
         })
       })
       
-      const { url } = await response.json()
-      if (url) {
-        window.location.href = url
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors du paiement')
+      }
+      
+      if (data.url) {
+        window.location.href = data.url
       }
     } catch (error) {
       console.error('Payment error:', error)
@@ -140,16 +170,25 @@ export default function DocumentPage() {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="votre@email.com"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-gray-900"
-                    required
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 text-gray-900 ${
+                      emailError ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                   />
+                  {emailError && (
+                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {emailError}
+                    </p>
+                  )}
                 </div>
 
                 <button
                   onClick={handlePayment}
-                  disabled={isLoading || !email}
+                  disabled={isLoading}
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {isLoading ? 'Redirection...' : `Payer ${document.price.toFixed(2)}€ et télécharger`}

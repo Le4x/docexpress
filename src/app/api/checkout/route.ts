@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Document non trouvé' }, { status: 404 })
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const appUrl = request.nextUrl.origin
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
