@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { documents, getAllCategories, getPopularDocuments, searchDocuments } from '@/data/documents'
 
@@ -53,10 +54,15 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1">
-            <span className="text-2xl font-bold text-blue-900">Doc</span>
-            <span className="text-2xl font-bold text-orange-500">Express</span>
-            <span className="text-2xl font-bold text-green-600">.fr</span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/img/logoDOCE.png"
+              alt="DocExpress.fr"
+              width={180}
+              height={45}
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-gray-600 hover:text-orange-500 transition-colors">
@@ -508,10 +514,14 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-1 mb-4">
-                <span className="text-xl font-bold text-white">Doc</span>
-                <span className="text-xl font-bold text-orange-500">Express</span>
-                <span className="text-xl font-bold text-green-500">.fr</span>
+              <div className="mb-4">
+                <Image
+                  src="/img/logoDOCE.png"
+                  alt="DocExpress.fr"
+                  width={160}
+                  height={40}
+                  className="h-9 w-auto brightness-0 invert"
+                />
               </div>
               <p className="text-gray-400 text-sm mb-4">
                 Générateur de documents administratifs français. Rapide, fiable et conforme à la législation.

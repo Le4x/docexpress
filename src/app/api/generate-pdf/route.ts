@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
-import { LettreDemissionCDI, ResiliationBox, PreavisLogement, GenericDocument } from '@/lib/pdf-templates'
+import {
+  LettreDemissionCDI,
+  LettreDemissionCDD,
+  ResiliationBox,
+  ResiliationMobile,
+  ResiliationAssurance,
+  PreavisLogement,
+  AttestationHonneur,
+  AttestationHebergement,
+  GenericDocument
+} from '@/lib/pdf-templates'
 import { stripe } from '@/lib/stripe'
 import { getDocumentBySlug } from '@/data/documents'
 
@@ -39,14 +49,29 @@ export async function GET(request: NextRequest) {
       case 'lettre-demission-cdi':
         pdfDocument = LettreDemissionCDI(formData)
         break
+      case 'lettre-demission-cdd':
+        pdfDocument = LettreDemissionCDD(formData)
+        break
       case 'resiliation-box-internet':
         pdfDocument = ResiliationBox(formData)
+        break
+      case 'resiliation-mobile':
+        pdfDocument = ResiliationMobile(formData)
+        break
+      case 'resiliation-assurance':
+        pdfDocument = ResiliationAssurance(formData)
         break
       case 'preavis-logement':
         pdfDocument = PreavisLogement(formData)
         break
+      case 'attestation-honneur':
+        pdfDocument = AttestationHonneur(formData)
+        break
+      case 'attestation-hebergement':
+        pdfDocument = AttestationHebergement(formData)
+        break
       default:
-        // Utiliser le template générique pour tous les autres documents
+        // Utiliser le template générique amélioré pour tous les autres documents
         pdfDocument = GenericDocument(formData, documentInfo?.title || 'Document')
         break
     }
