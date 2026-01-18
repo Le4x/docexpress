@@ -339,7 +339,7 @@ export default function DocumentPageClient({ document, slug }: Props) {
               alt="DocExpress.fr"
               width={140}
               height={35}
-              className="h-8 w-auto brightness-0 invert"
+              className="h-8 w-auto"
             />
             <div className="flex gap-6 text-sm">
               <Link href="/mentions-legales" className="hover:text-orange-400">Mentions légales</Link>

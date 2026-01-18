@@ -642,7 +642,7 @@ export default function Home() {
                 alt="DocExpress.fr"
                 width={180}
                 height={45}
-                className="h-12 w-auto brightness-0 invert mb-4"
+                className="h-12 w-auto mb-4"
               />
               <p className="text-slate-500 text-sm mb-4">
                 Générateur de documents administratifs français. Rapide, fiable et conforme à la législation.
