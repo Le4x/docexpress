@@ -18,9 +18,9 @@ export default function Confidentialite() {
             <Image
               src="/img/DOCEXPRESS-LOGO.png"
               alt="DocExpress.fr"
-              width={180}
-              height={45}
-              className="h-10 w-auto"
+              width={280}
+              height={70}
+              className="h-16 w-auto"
               priority
             />
           </Link>

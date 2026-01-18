@@ -93,9 +93,9 @@ export default function DocumentPageClient({ document, slug }: Props) {
             <Image
               src="/img/DOCEXPRESS-LOGO.png"
               alt="DocExpress.fr"
-              width={180}
-              height={45}
-              className="h-10 w-auto"
+              width={280}
+              height={70}
+              className="h-16 w-auto"
               priority
             />
           </Link>
@@ -337,9 +337,9 @@ export default function DocumentPageClient({ document, slug }: Props) {
             <Image
               src="/img/DOCEXPRESS-LOGO.png"
               alt="DocExpress.fr"
-              width={140}
-              height={35}
-              className="h-8 w-auto"
+              width={240}
+              height={60}
+              className="h-14 w-auto"
             />
             <div className="flex gap-6 text-sm">
               <Link href="/mentions-legales" className="hover:text-orange-400">Mentions légales</Link>
