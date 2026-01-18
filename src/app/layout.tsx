@@ -42,7 +42,7 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: 'DocExpress.fr',
   url: 'https://docexpress.fr',
-  logo: 'https://docexpress.fr/img/logoDOCE.png',
+  logo: 'https://docexpress.fr/img/DOCEXPRESS-LOGO.png',
   description: 'Générateur de documents administratifs français en ligne',
   contactPoint: {
     '@type': 'ContactPoint',

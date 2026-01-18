@@ -91,7 +91,7 @@ export default function DocumentPageClient({ document, slug }: Props) {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <Image
-              src="/img/logoDOCE.png"
+              src="/img/DOCEXPRESS-LOGO.png"
               alt="DocExpress.fr"
               width={180}
               height={45}
@@ -335,11 +335,11 @@ export default function DocumentPageClient({ document, slug }: Props) {
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <Image
-              src="/img/logoDOCE.png"
+              src="/img/DOCEXPRESS-LOGO.png"
               alt="DocExpress.fr"
               width={140}
               height={35}
-              className="h-8 w-auto brightness-0 invert"
+              className="h-8 w-auto"
             />
             <div className="flex gap-6 text-sm">
               <Link href="/mentions-legales" className="hover:text-orange-400">Mentions légales</Link>

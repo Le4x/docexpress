@@ -65,7 +65,7 @@ export default async function DocumentPage({ params }: Props) {
     '@type': 'Product',
     name: document.title,
     description: document.description,
-    image: 'https://docexpress.fr/img/logoDOCE.png',
+    image: 'https://docexpress.fr/img/DOCEXPRESS-LOGO.png',
     brand: {
       '@type': 'Brand',
       name: 'DocExpress.fr',

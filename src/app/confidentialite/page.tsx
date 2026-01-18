@@ -16,7 +16,7 @@ export default function Confidentialite() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <Image
-              src="/img/logoDOCE.png"
+              src="/img/DOCEXPRESS-LOGO.png"
               alt="DocExpress.fr"
               width={180}
               height={45}

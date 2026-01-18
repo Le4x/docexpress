@@ -61,7 +61,7 @@ export default function Home() {
           <div className="flex items-center justify-between h-20">
             <Link href="/" className="flex items-center">
               <Image
-                src="/img/logoDOCE.png"
+                src="/img/DOCEXPRESS-LOGO.png"
                 alt="DocExpress.fr - Générateur de documents administratifs"
                 width={220}
                 height={55}
@@ -638,11 +638,11 @@ export default function Home() {
             {/* Brand */}
             <div className="lg:col-span-1">
               <Image
-                src="/img/logoDOCE.png"
+                src="/img/DOCEXPRESS-LOGO.png"
                 alt="DocExpress.fr"
                 width={180}
                 height={45}
-                className="h-12 w-auto brightness-0 invert mb-4"
+                className="h-12 w-auto mb-4"
               />
               <p className="text-slate-500 text-sm mb-4">
                 Générateur de documents administratifs français. Rapide, fiable et conforme à la législation.
