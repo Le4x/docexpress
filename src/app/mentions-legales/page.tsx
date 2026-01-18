@@ -18,9 +18,9 @@ export default function MentionsLegales() {
             <Image
               src="/img/DOCEXPRESS-LOGO.png"
               alt="DocExpress.fr"
-              width={280}
-              height={70}
-              className="h-16 w-auto"
+              width={360}
+              height={90}
+              className="h-20 w-auto"
               priority
             />
           </Link>
