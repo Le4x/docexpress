@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { DocumentTemplate } from '@/data/documents'
@@ -20,6 +20,20 @@ export default function DocumentPageClient({ document, slug }: Props) {
   const [formData, setFormData] = useState<Record<string, string> | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // États pour l'offre gratuite
+  const [isEligibleForFree, setIsEligibleForFree] = useState<boolean | null>(null)
+  const [checkingEligibility, setCheckingEligibility] = useState(false)
+  const [freeDocumentUsed, setFreeDocumentUsed] = useState(false)
+
+  // Vérifier dans localStorage si l'utilisateur a déjà utilisé son document gratuit
+  useEffect(() => {
+    const usedFree = localStorage.getItem('docexpress_free_used')
+    if (usedFree) {
+      setFreeDocumentUsed(true)
+      setIsEligibleForFree(false)
+    }
+  }, [])
+
   const handleFormSubmit = (data: Record<string, string>) => {
     setFormData(data)
   }
@@ -33,10 +47,85 @@ export default function DocumentPageClient({ document, slug }: Props) {
     return emailRegex.test(email)
   }
 
-  const handleEmailChange = (value: string) => {
+  const handleEmailChange = async (value: string) => {
     setEmail(value)
     if (emailError && validateEmail(value)) {
       setEmailError('')
+    }
+
+    // Vérifier l'éligibilité quand l'email est valide
+    if (validateEmail(value) && !freeDocumentUsed) {
+      setCheckingEligibility(true)
+      try {
+        const response = await fetch(`/api/free-document?email=${encodeURIComponent(value)}`)
+        const data = await response.json()
+        setIsEligibleForFree(data.eligible)
+      } catch (error) {
+        console.error('Erreur vérification éligibilité:', error)
+        setIsEligibleForFree(false)
+      } finally {
+        setCheckingEligibility(false)
+      }
+    }
+  }
+
+  const handleFreeDownload = async () => {
+    if (!formData || !email) return
+
+    if (!validateEmail(email)) {
+      setEmailError('Veuillez entrer une adresse email valide')
+      return
+    }
+
+    setIsLoading(true)
+    setEmailError('')
+
+    try {
+      const response = await fetch('/api/free-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          documentSlug: slug,
+          formData
+        })
+      })
+
+      if (response.ok) {
+        // Télécharger le PDF
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = window.document.createElement('a')
+        a.href = url
+        a.download = `${slug}.pdf`
+        window.document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        a.remove()
+
+        // Marquer comme utilisé dans localStorage
+        localStorage.setItem('docexpress_free_used', 'true')
+        localStorage.setItem('docexpress_free_email', email)
+        setFreeDocumentUsed(true)
+        setIsEligibleForFree(false)
+
+        alert('Votre document gratuit a été téléchargé ! Une copie a également été envoyée à votre email.')
+      } else {
+        const data = await response.json()
+        if (data.requirePayment) {
+          setIsEligibleForFree(false)
+          setFreeDocumentUsed(true)
+          localStorage.setItem('docexpress_free_used', 'true')
+          alert('Vous avez déjà utilisé votre document gratuit. Veuillez procéder au paiement.')
+        } else {
+          throw new Error(data.error || 'Erreur lors de la génération')
+        }
+      }
+    } catch (error) {
+      console.error('Erreur téléchargement gratuit:', error)
+      alert('Erreur lors du téléchargement. Veuillez réessayer.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -233,15 +322,61 @@ export default function DocumentPageClient({ document, slug }: Props) {
                       {emailError}
                     </p>
                   )}
+
+                  {/* Indicateur d'éligibilité */}
+                  {checkingEligibility && (
+                    <p className="mt-2 text-sm text-gray-500">Vérification de votre éligibilité...</p>
+                  )}
+                  {!checkingEligibility && isEligibleForFree === true && (
+                    <p className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Vous êtes éligible au document gratuit !
+                    </p>
+                  )}
+                  {!checkingEligibility && isEligibleForFree === false && freeDocumentUsed && (
+                    <p className="mt-2 text-sm text-orange-600">
+                      Vous avez déjà utilisé votre document gratuit.
+                    </p>
+                  )}
                 </div>
 
-                <button
-                  onClick={handlePayment}
-                  disabled={isLoading}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {isLoading ? 'Redirection...' : `Payer ${document.price.toFixed(2)}€ et télécharger`}
-                </button>
+                {/* Boutons d'action */}
+                <div className="space-y-3">
+                  {/* Bouton gratuit si éligible */}
+                  {isEligibleForFree === true && (
+                    <button
+                      onClick={handleFreeDownload}
+                      disabled={isLoading}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isLoading ? (
+                        'Génération en cours...'
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                          </svg>
+                          Télécharger GRATUITEMENT
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Bouton payant */}
+                  <button
+                    onClick={handlePayment}
+                    disabled={isLoading}
+                    className={`w-full font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 ${
+                      isEligibleForFree === true
+                        ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-orange-500 hover:bg-orange-600 text-white'
+                    }`}
+                  >
+                    {isLoading ? 'Redirection...' : `Payer ${document.price.toFixed(2)}€ et télécharger`}
+                  </button>
+                </div>
 
                 <button
                   onClick={() => setFormData(null)}
@@ -256,9 +391,32 @@ export default function DocumentPageClient({ document, slug }: Props) {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-24">
+              {/* Offre gratuite si éligible */}
+              {!freeDocumentUsed && (
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg p-4 mb-4 -mt-2 -mx-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">🎁</span>
+                    <span className="font-bold">1er document OFFERT</span>
+                  </div>
+                  <p className="text-sm text-green-100">Entrez votre email pour en profiter !</p>
+                </div>
+              )}
+
               <div className="text-center mb-6">
-                <span className="text-4xl font-bold text-orange-500">{document.price.toFixed(2)}€</span>
-                <p className="text-sm text-gray-500 mt-1">TTC</p>
+                {!freeDocumentUsed ? (
+                  <>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-4xl font-bold text-green-500">0€</span>
+                      <span className="text-xl text-gray-400 line-through">{document.price.toFixed(2)}€</span>
+                    </div>
+                    <p className="text-sm text-green-600 font-medium mt-1">1er document gratuit !</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-4xl font-bold text-orange-500">{document.price.toFixed(2)}€</span>
+                    <p className="text-sm text-gray-500 mt-1">TTC</p>
+                  </>
+                )}
               </div>
 
               <ul className="space-y-3 text-sm">
@@ -285,6 +443,12 @@ export default function DocumentPageClient({ document, slug }: Props) {
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   Génération en {document.duration}
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Sans filigrane
                 </li>
               </ul>
 
