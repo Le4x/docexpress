@@ -58,14 +58,14 @@ export default function Home() {
       {/* Header Pro */}
       <header className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-24">
+          <div className="flex items-center justify-between h-28">
             <Link href="/" className="flex items-center">
               <Image
                 src="/img/DOCEXPRESS-LOGO.png"
                 alt="DocExpress.fr - Générateur de documents administratifs"
-                width={320}
-                height={80}
-                className="h-20 w-auto"
+                width={400}
+                height={100}
+                className="h-24 w-auto"
                 priority
               />
             </Link>
@@ -640,9 +640,9 @@ export default function Home() {
               <Image
                 src="/img/DOCEXPRESS-LOGO.png"
                 alt="DocExpress.fr"
-                width={280}
-                height={70}
-                className="h-16 w-auto mb-4"
+                width={360}
+                height={90}
+                className="h-20 w-auto mb-6"
               />
               <p className="text-slate-500 text-sm mb-4">
                 Générateur de documents administratifs français. Rapide, fiable et conforme à la législation.
