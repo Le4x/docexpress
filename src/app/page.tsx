@@ -3,17 +3,16 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { documents, getAllCategories, getPopularDocuments, searchDocuments } from '@/data/documents'
 
 export default function Home() {
-  const router = useRouter()
   const categories = getAllCategories()
   const popularDocuments = getPopularDocuments()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<typeof documents>([])
   const [showResults, setShowResults] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
@@ -78,7 +77,42 @@ export default function Home() {
               FAQ
             </Link>
           </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-gray-600 hover:text-orange-500 transition-colors"
+            aria-label="Menu"
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <nav className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1">
+            <Link href="/" className="block py-3 text-gray-600 hover:text-orange-500 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              Accueil
+            </Link>
+            <Link href="#documents" className="block py-3 text-gray-600 hover:text-orange-500 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              Documents
+            </Link>
+            <Link href="#tarifs" className="block py-3 text-gray-600 hover:text-orange-500 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              Tarifs
+            </Link>
+            <Link href="#faq" className="block py-3 text-gray-600 hover:text-orange-500" onClick={() => setMobileMenuOpen(false)}>
+              FAQ
+            </Link>
+          </nav>
+        )}
       </header>
 
       {/* Hero Section avec barre de recherche */}

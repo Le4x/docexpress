@@ -36,6 +36,41 @@ export const metadata: Metadata = {
   },
 };
 
+// JSON-LD pour l'organisation
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'DocExpress.fr',
+  url: 'https://docexpress.fr',
+  logo: 'https://docexpress.fr/img/logoDOCE.png',
+  description: 'Générateur de documents administratifs français en ligne',
+  contactPoint: {
+    '@type': 'ContactPoint',
+    email: 'contact@docexpress.fr',
+    contactType: 'customer service',
+    availableLanguage: 'French',
+  },
+  sameAs: [],
+}
+
+// JSON-LD pour le site web
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'DocExpress.fr',
+  url: 'https://docexpress.fr',
+  description: 'Générez vos documents administratifs en 2 minutes',
+  publisher: {
+    '@type': 'Organization',
+    name: 'DocExpress.fr',
+  },
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://docexpress.fr/?search={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,6 +78,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
