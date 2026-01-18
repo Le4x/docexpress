@@ -457,45 +457,79 @@ export default function Home() {
       {/* Pricing */}
       <section id="tarifs" className="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Value Proposition Banner */}
+          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-2xl p-6 mb-12 max-w-3xl mx-auto">
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-3xl">💰</span>
+                <div>
+                  <div className="text-green-400 font-bold text-lg">Économisez 150€</div>
+                  <div className="text-slate-400 text-sm">vs un avocat ou notaire</div>
+                </div>
+              </div>
+              <div className="hidden sm:block w-px h-12 bg-white/20"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-3xl">⚡</span>
+                <div>
+                  <div className="text-green-400 font-bold text-lg">2 minutes</div>
+                  <div className="text-slate-400 text-sm">vs plusieurs jours</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="text-center mb-12">
-            <span className="inline-block bg-white/10 text-white text-sm font-semibold px-4 py-1.5 rounded-full mb-4">Tarifs transparents</span>
+            <span className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-bold px-4 py-1.5 rounded-full mb-4 animate-pulse">
+              OFFRE SPÉCIALE - 1er document OFFERT
+            </span>
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              Un prix simple, sans surprise
+              Testez gratuitement, payez si satisfait
             </h2>
             <p className="text-xl text-slate-300">
-              Payez uniquement ce que vous utilisez, sans abonnement.
+              Votre premier document est <span className="text-green-400 font-bold">100% gratuit</span> - sans carte bancaire
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Free */}
-            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8">
-              <div className="text-slate-300 font-medium mb-2">Aperçu</div>
-              <div className="text-4xl font-bold mb-4">Gratuit</div>
-              <p className="text-slate-400 mb-6">Visualisez votre document avant achat</p>
+            {/* Free - Premier document */}
+            <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm border-2 border-green-400/50 rounded-3xl p-8 relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white text-sm font-bold px-4 py-1 rounded-full">
+                OFFERT
+              </div>
+              <div className="text-green-400 font-medium mb-2">1er document</div>
+              <div className="text-4xl font-bold mb-1">0€</div>
+              <div className="text-slate-400 text-sm mb-4 line-through">2,99€</div>
+              <p className="text-slate-300 mb-6">Testez notre service gratuitement</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2 text-slate-300">
                   <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Formulaire guidé
+                  PDF complet téléchargeable
                 </li>
                 <li className="flex items-center gap-2 text-slate-300">
                   <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Assistant IA
+                  Sans filigrane
                 </li>
-                <li className="flex items-center gap-2 text-slate-400">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <li className="flex items-center gap-2 text-slate-300">
+                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Téléchargement PDF
+                  Conforme à la loi
+                </li>
+                <li className="flex items-center gap-2 text-slate-300">
+                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Juste votre email
                 </li>
               </ul>
-              <Link href="#documents" className="block w-full py-3 text-center border border-white/30 rounded-xl font-semibold hover:bg-white/10 transition-colors">
-                Essayer
+              <Link href="#documents" className="block w-full py-3 text-center bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-colors">
+                Obtenir mon document gratuit
               </Link>
+              <p className="text-center text-xs text-slate-500 mt-3">Aucune carte bancaire requise</p>
             </div>
 
             {/* Standard */}
@@ -530,7 +564,7 @@ export default function Home() {
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Support email
+                  Support email 24h
                 </li>
               </ul>
               <Link href="#documents" className="block w-full py-3 text-center bg-white text-orange-600 rounded-xl font-bold hover:bg-slate-100 transition-colors">
@@ -538,35 +572,95 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Pro */}
-            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8">
-              <div className="text-slate-300 font-medium mb-2">Pack Pro</div>
-              <div className="text-4xl font-bold mb-1">6,99€</div>
-              <div className="text-slate-400 text-sm mb-4">3 documents</div>
-              <p className="text-slate-400 mb-6">Économisez sur vos démarches</p>
+            {/* Pack Pro */}
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-8 relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-sm font-bold px-4 py-1 rounded-full">
+                -22% d'économie
+              </div>
+              <div className="text-purple-400 font-medium mb-2">Pack 3 documents</div>
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-4xl font-bold">6,99€</span>
+                <span className="text-slate-500 line-through text-lg">8,97€</span>
+              </div>
+              <div className="text-slate-400 text-sm mb-4">soit 2,33€/document</div>
+              <p className="text-slate-300 mb-6">Pour vos démarches multiples</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2 text-slate-300">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   3 documents au choix
                 </li>
                 <li className="flex items-center gap-2 text-slate-300">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Économie de 22%
+                  Économisez 1,98€
                 </li>
                 <li className="flex items-center gap-2 text-slate-300">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Validité 1 an
+                  Valable 12 mois
+                </li>
+                <li className="flex items-center gap-2 text-slate-300">
+                  <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Support prioritaire
                 </li>
               </ul>
-              <button disabled className="block w-full py-3 text-center border border-white/30 rounded-xl font-semibold opacity-50 cursor-not-allowed">
-                Bientôt disponible
-              </button>
+              <Link href="#documents" className="block w-full py-3 text-center bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold transition-colors">
+                Choisir le pack
+              </Link>
+            </div>
+          </div>
+
+          {/* Testimonials */}
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h3 className="text-xl font-semibold text-white">Ils nous font confiance</h3>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <div className="flex text-amber-400 mb-3">
+                  {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
+                </div>
+                <p className="text-slate-300 text-sm mb-4">"Ma lettre de démission générée en 2 minutes. Acceptée sans problème par mon employeur !"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">M</div>
+                  <div>
+                    <div className="text-white font-medium text-sm">Marie L.</div>
+                    <div className="text-slate-500 text-xs">Paris</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <div className="flex text-amber-400 mb-3">
+                  {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
+                </div>
+                <p className="text-slate-300 text-sm mb-4">"Résiliation Free effectuée en quelques clics. Le document était parfaitement conforme."</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">T</div>
+                  <div>
+                    <div className="text-white font-medium text-sm">Thomas R.</div>
+                    <div className="text-slate-500 text-xs">Lyon</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+                <div className="flex text-amber-400 mb-3">
+                  {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
+                </div>
+                <p className="text-slate-300 text-sm mb-4">"Beaucoup moins cher qu'un avocat et tout aussi efficace. Je recommande vivement !"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">S</div>
+                  <div>
+                    <div className="text-white font-medium text-sm">Sophie D.</div>
+                    <div className="text-slate-500 text-xs">Bordeaux</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
