@@ -116,9 +116,9 @@ export async function POST(request: NextRequest) {
     try {
       await sendDocumentEmail({
         to: normalizedEmail,
-        documentName: documentInfo.title,
+        documentTitle: documentInfo.title,
         pdfBuffer: Buffer.from(pdfBuffer),
-        documentSlug: documentSlug
+        fileName: `${documentSlug}.pdf`
       })
     } catch (emailError) {
       console.error('Erreur envoi email:', emailError)
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Retourner le PDF directement pour téléchargement
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${documentSlug}.pdf"`,
