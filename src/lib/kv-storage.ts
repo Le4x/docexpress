@@ -156,3 +156,168 @@ export async function incrementFreeDocumentCount(): Promise<void> {
     console.error('Erreur KV incrementFreeDocumentCount:', error)
   }
 }
+
+// ============================================
+// GESTION DES PACKS
+// ============================================
+
+const PACK_PREFIX = 'pack:'
+
+interface PackData {
+  email: string
+  documentsRemaining: number
+  documentsTotal: number
+  purchasedAt: string
+  expiresAt: string
+  stripeSessionId: string
+  documentsUsed: string[] // Liste des slugs des documents déjà générés
+}
+
+// Créer un nouveau pack pour un utilisateur
+export async function createPack(
+  email: string,
+  stripeSessionId: string,
+  documentsTotal: number = 3
+): Promise<string | null> {
+  try {
+    const normalizedEmail = email.toLowerCase().trim()
+    const packId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000) // 1 an
+
+    const packData: PackData = {
+      email: normalizedEmail,
+      documentsRemaining: documentsTotal,
+      documentsTotal,
+      purchasedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      stripeSessionId,
+      documentsUsed: [],
+    }
+
+    // Stocker le pack
+    await kv.set(`${PACK_PREFIX}${packId}`, packData)
+
+    // Associer le pack à l'email de l'utilisateur
+    const userPacks = await getUserPacks(normalizedEmail)
+    userPacks.push(packId)
+    await kv.set(`user-packs:${normalizedEmail}`, userPacks)
+
+    return packId
+  } catch (error) {
+    console.error('Erreur KV createPack:', error)
+    return null
+  }
+}
+
+// Récupérer les packs d'un utilisateur
+export async function getUserPacks(email: string): Promise<string[]> {
+  try {
+    const normalizedEmail = email.toLowerCase().trim()
+    const packs = await kv.get<string[]>(`user-packs:${normalizedEmail}`)
+    return packs || []
+  } catch (error) {
+    console.error('Erreur KV getUserPacks:', error)
+    return []
+  }
+}
+
+// Récupérer les données d'un pack
+export async function getPackData(packId: string): Promise<PackData | null> {
+  try {
+    return await kv.get<PackData>(`${PACK_PREFIX}${packId}`)
+  } catch (error) {
+    console.error('Erreur KV getPackData:', error)
+    return null
+  }
+}
+
+// Vérifier si un utilisateur a un pack actif avec des documents restants
+export async function getActivePackForUser(email: string): Promise<{ packId: string; data: PackData } | null> {
+  try {
+    const normalizedEmail = email.toLowerCase().trim()
+    const packIds = await getUserPacks(normalizedEmail)
+
+    for (const packId of packIds) {
+      const packData = await getPackData(packId)
+      if (packData) {
+        const now = new Date()
+        const expiresAt = new Date(packData.expiresAt)
+
+        // Vérifier si le pack est encore valide et a des documents restants
+        if (now < expiresAt && packData.documentsRemaining > 0) {
+          return { packId, data: packData }
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.error('Erreur KV getActivePackForUser:', error)
+    return null
+  }
+}
+
+// Utiliser un document du pack
+export async function usePackDocument(
+  packId: string,
+  documentSlug: string
+): Promise<{ success: boolean; remaining: number }> {
+  try {
+    const packData = await getPackData(packId)
+    if (!packData) {
+      return { success: false, remaining: 0 }
+    }
+
+    // Vérifier expiration
+    const now = new Date()
+    const expiresAt = new Date(packData.expiresAt)
+    if (now >= expiresAt) {
+      return { success: false, remaining: 0 }
+    }
+
+    // Vérifier documents restants
+    if (packData.documentsRemaining <= 0) {
+      return { success: false, remaining: 0 }
+    }
+
+    // Mettre à jour le pack
+    packData.documentsRemaining -= 1
+    packData.documentsUsed.push(documentSlug)
+
+    await kv.set(`${PACK_PREFIX}${packId}`, packData)
+
+    return { success: true, remaining: packData.documentsRemaining }
+  } catch (error) {
+    console.error('Erreur KV usePackDocument:', error)
+    return { success: false, remaining: 0 }
+  }
+}
+
+// Vérifier si un pack existe pour une session Stripe
+export async function getPackByStripeSession(sessionId: string): Promise<{ packId: string; data: PackData } | null> {
+  // Note: Cette fonction nécessiterait un index secondaire en production
+  // Pour l'instant, on stocke aussi par session_id
+  try {
+    const packId = await kv.get<string>(`stripe-session:${sessionId}`)
+    if (packId) {
+      const data = await getPackData(packId)
+      if (data) {
+        return { packId, data }
+      }
+    }
+    return null
+  } catch (error) {
+    console.error('Erreur KV getPackByStripeSession:', error)
+    return null
+  }
+}
+
+// Stocker l'association session Stripe -> pack
+export async function linkStripeSessionToPack(sessionId: string, packId: string): Promise<void> {
+  try {
+    await kv.set(`stripe-session:${sessionId}`, packId)
+  } catch (error) {
+    console.error('Erreur KV linkStripeSessionToPack:', error)
+  }
+}

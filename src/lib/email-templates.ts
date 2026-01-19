@@ -89,12 +89,12 @@ export async function sendFollowUpEmail(to: string, documentTitle: string): Prom
                 <span style="color: #ea580c; font-size: 32px; font-weight: bold; margin-left: 10px;">6,99€</span>
               </div>
               <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 15px 0 0 0;">
-                Économisez 40% sur vos prochains documents
+                Économisez 22% sur vos prochains documents
               </p>
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://docexpress.fr/#pricing" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+              <a href="https://docexpress.fr/pack" style="display: inline-block; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
                 Profiter de l'offre
               </a>
             </div>

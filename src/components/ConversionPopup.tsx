@@ -93,10 +93,10 @@ export default function ConversionPopup({ delay = 30000, trigger = 'time' }: Con
             Pack 3 Documents
           </h2>
           <div className="flex items-center justify-center gap-3">
-            <span className="text-white/70 text-xl line-through">11,97€</span>
+            <span className="text-white/70 text-xl line-through">8,97€</span>
             <span className="text-4xl font-bold text-white">6,99€</span>
           </div>
-          <p className="text-orange-100 text-sm mt-2">Économisez 40% !</p>
+          <p className="text-orange-100 text-sm mt-2">Économisez 22% !</p>
         </div>
 
         {/* Contenu */}
@@ -129,11 +129,11 @@ export default function ConversionPopup({ delay = 30000, trigger = 'time' }: Con
           </ul>
 
           <Link
-            href="/#pricing"
+            href="/pack"
             onClick={handleDismiss}
             className="block w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-4 px-6 rounded-xl text-center hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl"
           >
-            Profiter de l'offre
+            Acheter le pack - 6,99€
           </Link>
 
           <button

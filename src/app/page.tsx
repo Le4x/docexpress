@@ -610,8 +610,8 @@ export default function Home() {
                   Support prioritaire
                 </li>
               </ul>
-              <Link href="#documents" className="block w-full py-3 text-center bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold transition-colors">
-                Choisir le pack
+              <Link href="/pack" className="block w-full py-3 text-center bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold transition-colors">
+                Acheter le pack
               </Link>
             </div>
           </div>
