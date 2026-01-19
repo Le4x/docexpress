@@ -12,6 +12,8 @@ interface Props {
   slug: string
 }
 
+type FreeDocStep = 'email' | 'code' | 'done'
+
 export default function DocumentPageClient({ document, slug }: Props) {
   const [mode, setMode] = useState<'form' | 'chat'>('form')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,10 +22,15 @@ export default function DocumentPageClient({ document, slug }: Props) {
   const [formData, setFormData] = useState<Record<string, string> | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // États pour l'offre gratuite
+  // États pour l'offre gratuite avec vérification
   const [isEligibleForFree, setIsEligibleForFree] = useState<boolean | null>(null)
   const [checkingEligibility, setCheckingEligibility] = useState(false)
   const [freeDocumentUsed, setFreeDocumentUsed] = useState(false)
+  const [freeDocStep, setFreeDocStep] = useState<FreeDocStep>('email')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [codeError, setCodeError] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
+  const [resendCountdown, setResendCountdown] = useState(0)
 
   // Vérifier dans localStorage si l'utilisateur a déjà utilisé son document gratuit
   useEffect(() => {
@@ -33,6 +40,14 @@ export default function DocumentPageClient({ document, slug }: Props) {
       setIsEligibleForFree(false)
     }
   }, [])
+
+  // Countdown pour renvoyer le code
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [resendCountdown])
 
   const handleFormSubmit = (data: Record<string, string>) => {
     setFormData(data)
@@ -59,7 +74,13 @@ export default function DocumentPageClient({ document, slug }: Props) {
       try {
         const response = await fetch(`/api/free-document?email=${encodeURIComponent(value)}`)
         const data = await response.json()
-        setIsEligibleForFree(data.eligible)
+
+        if (data.rateLimited) {
+          setEmailError('Trop de vérifications. Réessayez dans quelques minutes.')
+          setIsEligibleForFree(false)
+        } else {
+          setIsEligibleForFree(data.eligible)
+        }
       } catch (error) {
         console.error('Erreur vérification éligibilité:', error)
         setIsEligibleForFree(false)
@@ -69,7 +90,8 @@ export default function DocumentPageClient({ document, slug }: Props) {
     }
   }
 
-  const handleFreeDownload = async () => {
+  // Envoyer le code de vérification
+  const handleSendCode = async () => {
     if (!formData || !email) return
 
     if (!validateEmail(email)) {
@@ -85,9 +107,57 @@ export default function DocumentPageClient({ document, slug }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'send-code',
           email,
           documentSlug: slug,
           formData
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setCodeSent(true)
+        setFreeDocStep('code')
+        setResendCountdown(60) // 60 secondes avant de pouvoir renvoyer
+      } else {
+        if (data.requirePayment) {
+          setIsEligibleForFree(false)
+          setFreeDocumentUsed(true)
+          localStorage.setItem('docexpress_free_used', 'true')
+          setEmailError('Vous avez déjà utilisé votre document gratuit.')
+        } else if (data.rateLimited) {
+          setEmailError('Trop de requêtes. Réessayez dans quelques minutes.')
+        } else {
+          setEmailError(data.error || 'Erreur lors de l\'envoi du code')
+        }
+      }
+    } catch (error) {
+      console.error('Erreur envoi code:', error)
+      setEmailError('Erreur réseau. Veuillez réessayer.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Vérifier le code et générer le document
+  const handleVerifyAndDownload = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setCodeError('Veuillez entrer le code à 6 chiffres')
+      return
+    }
+
+    setIsLoading(true)
+    setCodeError('')
+
+    try {
+      const response = await fetch('/api/free-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify-and-generate',
+          email,
+          code: verificationCode
         })
       })
 
@@ -103,27 +173,23 @@ export default function DocumentPageClient({ document, slug }: Props) {
         window.URL.revokeObjectURL(url)
         a.remove()
 
-        // Marquer comme utilisé dans localStorage
+        // Marquer comme utilisé
         localStorage.setItem('docexpress_free_used', 'true')
         localStorage.setItem('docexpress_free_email', email)
         setFreeDocumentUsed(true)
         setIsEligibleForFree(false)
-
-        alert('Votre document gratuit a été téléchargé ! Une copie a également été envoyée à votre email.')
+        setFreeDocStep('done')
       } else {
         const data = await response.json()
-        if (data.requirePayment) {
-          setIsEligibleForFree(false)
-          setFreeDocumentUsed(true)
-          localStorage.setItem('docexpress_free_used', 'true')
-          alert('Vous avez déjà utilisé votre document gratuit. Veuillez procéder au paiement.')
+        if (data.rateLimited) {
+          setCodeError('Trop de tentatives. Réessayez dans une heure.')
         } else {
-          throw new Error(data.error || 'Erreur lors de la génération')
+          setCodeError(data.error || 'Code invalide ou expiré')
         }
       }
     } catch (error) {
-      console.error('Erreur téléchargement gratuit:', error)
-      alert('Erreur lors du téléchargement. Veuillez réessayer.')
+      console.error('Erreur vérification code:', error)
+      setCodeError('Erreur réseau. Veuillez réessayer.')
     } finally {
       setIsLoading(false)
     }
@@ -292,7 +358,105 @@ export default function DocumentPageClient({ document, slug }: Props) {
               ) : (
                 <ChatAssistant documentType={slug} onComplete={handleChatComplete} />
               )
+            ) : freeDocStep === 'done' ? (
+              /* Étape terminée - Document téléchargé */
+              <div className="bg-white rounded-lg border border-green-200 p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Document téléchargé !</h3>
+                  <p className="text-gray-600 mb-4">
+                    Votre document gratuit a été téléchargé. Une copie a également été envoyée à {email}.
+                  </p>
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-6">
+                    <p className="text-orange-800 font-medium mb-2">Besoin d'autres documents ?</p>
+                    <p className="text-orange-700 text-sm mb-3">
+                      Profitez du Pack 3 documents à seulement 6,99€ (-40%)
+                    </p>
+                    <Link
+                      href="/#pricing"
+                      className="inline-block bg-orange-500 text-white px-6 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                    >
+                      Voir les offres
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : freeDocStep === 'code' && codeSent ? (
+              /* Étape 2: Entrer le code de vérification */
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Vérifiez votre email
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Un code à 6 chiffres a été envoyé à <strong>{email}</strong>
+                </p>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Code de vérification
+                  </label>
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                      setVerificationCode(value)
+                      if (codeError) setCodeError('')
+                    }}
+                    placeholder="123456"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 text-gray-900 text-center text-2xl tracking-widest font-mono ${
+                      codeError ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
+                    maxLength={6}
+                    autoFocus
+                  />
+                  {codeError && (
+                    <p className="mt-2 text-sm text-red-600">{codeError}</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleVerifyAndDownload}
+                  disabled={isLoading || verificationCode.length !== 6}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? 'Vérification...' : 'Valider et télécharger'}
+                </button>
+
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-500 mb-2">Vous n'avez pas reçu le code ?</p>
+                  {resendCountdown > 0 ? (
+                    <p className="text-sm text-gray-400">
+                      Renvoyer dans {resendCountdown}s
+                    </p>
+                  ) : (
+                    <button
+                      onClick={handleSendCode}
+                      disabled={isLoading}
+                      className="text-sm text-orange-500 hover:text-orange-600 font-medium"
+                    >
+                      Renvoyer le code
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    setFreeDocStep('email')
+                    setCodeSent(false)
+                    setVerificationCode('')
+                  }}
+                  className="w-full mt-3 text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  ← Modifier l'email
+                </button>
+              </div>
             ) : (
+              /* Étape 1: Email et choix gratuit/payant */
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-green-600 mb-4 flex items-center gap-2">
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -325,7 +489,13 @@ export default function DocumentPageClient({ document, slug }: Props) {
 
                   {/* Indicateur d'éligibilité */}
                   {checkingEligibility && (
-                    <p className="mt-2 text-sm text-gray-500">Vérification de votre éligibilité...</p>
+                    <p className="mt-2 text-sm text-gray-500 flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Vérification de votre éligibilité...
+                    </p>
                   )}
                   {!checkingEligibility && isEligibleForFree === true && (
                     <p className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
@@ -347,18 +517,24 @@ export default function DocumentPageClient({ document, slug }: Props) {
                   {/* Bouton gratuit si éligible */}
                   {isEligibleForFree === true && (
                     <button
-                      onClick={handleFreeDownload}
+                      onClick={handleSendCode}
                       disabled={isLoading}
                       className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {isLoading ? (
-                        'Génération en cours...'
+                        <>
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Envoi du code...
+                        </>
                       ) : (
                         <>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                           </svg>
-                          Télécharger GRATUITEMENT
+                          Obtenir mon document GRATUIT
                         </>
                       )}
                     </button>
