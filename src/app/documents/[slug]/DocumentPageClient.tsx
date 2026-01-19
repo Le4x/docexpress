@@ -32,6 +32,14 @@ export default function DocumentPageClient({ document, slug }: Props) {
   const [codeSent, setCodeSent] = useState(false)
   const [resendCountdown, setResendCountdown] = useState(0)
 
+  // États pour le pack
+  const [packInfo, setPackInfo] = useState<{
+    hasPack: boolean
+    packId: string
+    documentsRemaining: number
+  } | null>(null)
+  const [checkingPack, setCheckingPack] = useState(false)
+
   // Vérifier dans localStorage si l'utilisateur a déjà utilisé son document gratuit
   useEffect(() => {
     const usedFree = localStorage.getItem('docexpress_free_used')
@@ -68,25 +76,94 @@ export default function DocumentPageClient({ document, slug }: Props) {
       setEmailError('')
     }
 
-    // Vérifier l'éligibilité quand l'email est valide
-    if (validateEmail(value) && !freeDocumentUsed) {
+    // Vérifier l'éligibilité et le pack quand l'email est valide
+    if (validateEmail(value)) {
       setCheckingEligibility(true)
-      try {
-        const response = await fetch(`/api/free-document?email=${encodeURIComponent(value)}`)
-        const data = await response.json()
+      setCheckingPack(true)
 
-        if (data.rateLimited) {
-          setEmailError('Trop de vérifications. Réessayez dans quelques minutes.')
-          setIsEligibleForFree(false)
+      try {
+        // Vérifier le pack en parallèle avec l'éligibilité gratuit
+        const [freeResponse, packResponse] = await Promise.all([
+          !freeDocumentUsed ? fetch(`/api/free-document?email=${encodeURIComponent(value)}`) : Promise.resolve(null),
+          fetch(`/api/pack?email=${encodeURIComponent(value)}`)
+        ])
+
+        // Traiter réponse gratuit
+        if (freeResponse && !freeDocumentUsed) {
+          const freeData = await freeResponse.json()
+          if (freeData.rateLimited) {
+            setEmailError('Trop de vérifications. Réessayez dans quelques minutes.')
+            setIsEligibleForFree(false)
+          } else {
+            setIsEligibleForFree(freeData.eligible)
+          }
+        }
+
+        // Traiter réponse pack
+        const packData = await packResponse.json()
+        if (packData.hasPack) {
+          setPackInfo({
+            hasPack: true,
+            packId: packData.packId,
+            documentsRemaining: packData.documentsRemaining
+          })
         } else {
-          setIsEligibleForFree(data.eligible)
+          setPackInfo(null)
         }
       } catch (error) {
-        console.error('Erreur vérification éligibilité:', error)
+        console.error('Erreur vérification:', error)
         setIsEligibleForFree(false)
+        setPackInfo(null)
       } finally {
         setCheckingEligibility(false)
+        setCheckingPack(false)
       }
+    }
+  }
+
+  // Utiliser un document du pack
+  const handlePackDownload = async () => {
+    if (!formData || !email || !packInfo) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/pack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          packId: packInfo.packId,
+          documentSlug: slug,
+          formData
+        })
+      })
+
+      if (response.ok) {
+        // Télécharger le PDF
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = window.document.createElement('a')
+        a.href = url
+        a.download = `${slug}.pdf`
+        window.document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        a.remove()
+
+        // Mettre à jour le nombre de documents restants
+        const remaining = parseInt(response.headers.get('X-Documents-Remaining') || '0')
+        setPackInfo(prev => prev ? { ...prev, documentsRemaining: remaining } : null)
+
+        alert(`Document téléchargé ! Il vous reste ${remaining} document(s) dans votre pack.`)
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Erreur lors du téléchargement')
+      }
+    } catch (error) {
+      console.error('Erreur pack download:', error)
+      alert('Erreur réseau. Veuillez réessayer.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -374,7 +451,7 @@ export default function DocumentPageClient({ document, slug }: Props) {
                   <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-6">
                     <p className="text-orange-800 font-medium mb-2">Besoin d'autres documents ?</p>
                     <p className="text-orange-700 text-sm mb-3">
-                      Profitez du Pack 3 documents à seulement 6,99€ (-40%)
+                      Profitez du Pack 3 documents à seulement 6,99€ (-22%)
                     </p>
                     <Link
                       href="/#pricing"
@@ -505,17 +582,55 @@ export default function DocumentPageClient({ document, slug }: Props) {
                       Vous êtes éligible au document gratuit !
                     </p>
                   )}
-                  {!checkingEligibility && isEligibleForFree === false && freeDocumentUsed && (
+                  {!checkingEligibility && isEligibleForFree === false && freeDocumentUsed && !packInfo && (
                     <p className="mt-2 text-sm text-orange-600">
                       Vous avez déjà utilisé votre document gratuit.
+                    </p>
+                  )}
+                  {/* Indicateur de pack */}
+                  {checkingPack && (
+                    <p className="mt-2 text-sm text-gray-500">Vérification de votre pack...</p>
+                  )}
+                  {!checkingPack && packInfo && packInfo.documentsRemaining > 0 && (
+                    <p className="mt-2 text-sm text-blue-600 font-medium flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Vous avez un pack actif ({packInfo.documentsRemaining} doc. restants)
                     </p>
                   )}
                 </div>
 
                 {/* Boutons d'action */}
                 <div className="space-y-3">
-                  {/* Bouton gratuit si éligible */}
-                  {isEligibleForFree === true && (
+                  {/* Bouton pack si disponible (priorité) */}
+                  {packInfo && packInfo.documentsRemaining > 0 && (
+                    <button
+                      onClick={handlePackDownload}
+                      disabled={isLoading}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isLoading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Génération...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                          </svg>
+                          Utiliser mon pack ({packInfo.documentsRemaining} restants)
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Bouton gratuit si éligible (et pas de pack) */}
+                  {isEligibleForFree === true && !packInfo && (
                     <button
                       onClick={handleSendCode}
                       disabled={isLoading}
@@ -545,13 +660,23 @@ export default function DocumentPageClient({ document, slug }: Props) {
                     onClick={handlePayment}
                     disabled={isLoading}
                     className={`w-full font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 ${
-                      isEligibleForFree === true
+                      (isEligibleForFree === true || (packInfo && packInfo.documentsRemaining > 0))
                         ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         : 'bg-orange-500 hover:bg-orange-600 text-white'
                     }`}
                   >
                     {isLoading ? 'Redirection...' : `Payer ${document.price.toFixed(2)}€ et télécharger`}
                   </button>
+
+                  {/* Lien vers l'achat de pack */}
+                  {!packInfo && freeDocumentUsed && (
+                    <Link
+                      href="/pack"
+                      className="block w-full text-center text-blue-600 hover:text-blue-800 text-sm py-2"
+                    >
+                      Ou achetez un pack 3 documents à 6,99€ (-22%)
+                    </Link>
+                  )}
                 </div>
 
                 <button
