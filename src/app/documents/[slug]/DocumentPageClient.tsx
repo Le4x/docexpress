@@ -41,13 +41,53 @@ export default function DocumentPageClient({ document, slug }: Props) {
   const [checkingPack, setCheckingPack] = useState(false)
 
   // Vérifier dans localStorage si l'utilisateur a déjà utilisé son document gratuit
+  // ET si un pack existe
   useEffect(() => {
     const usedFree = localStorage.getItem('docexpress_free_used')
     if (usedFree) {
       setFreeDocumentUsed(true)
       setIsEligibleForFree(false)
     }
+
+    // Vérifier si un pack existe dans localStorage (après achat)
+    const savedPackId = localStorage.getItem('docexpress_pack_id')
+    const savedPackEmail = localStorage.getItem('docexpress_pack_email')
+
+    if (savedPackId && savedPackEmail) {
+      // Pré-remplir l'email et vérifier le pack automatiquement
+      setEmail(savedPackEmail)
+      checkPackStatus(savedPackEmail)
+    }
   }, [])
+
+  // Fonction pour vérifier le statut du pack
+  const checkPackStatus = async (emailToCheck: string) => {
+    setCheckingPack(true)
+    try {
+      const response = await fetch(`/api/pack?email=${encodeURIComponent(emailToCheck)}`)
+      const data = await response.json()
+
+      if (data.hasPack) {
+        setPackInfo({
+          hasPack: true,
+          packId: data.packId,
+          documentsRemaining: data.documentsRemaining
+        })
+        // Mettre à jour localStorage avec le bon packId
+        localStorage.setItem('docexpress_pack_id', data.packId)
+      } else {
+        // Le pack n'existe plus ou a expiré - nettoyer localStorage
+        localStorage.removeItem('docexpress_pack_id')
+        localStorage.removeItem('docexpress_pack_email')
+        setPackInfo(null)
+      }
+    } catch (error) {
+      console.error('Erreur vérification pack:', error)
+      setPackInfo(null)
+    } finally {
+      setCheckingPack(false)
+    }
+  }
 
   // Countdown pour renvoyer le code
   useEffect(() => {
@@ -564,39 +604,48 @@ export default function DocumentPageClient({ document, slug }: Props) {
                     </p>
                   )}
 
-                  {/* Indicateur d'éligibilité */}
-                  {checkingEligibility && (
+                  {/* Indicateur de chargement */}
+                  {(checkingEligibility || checkingPack) && (
                     <p className="mt-2 text-sm text-gray-500 flex items-center gap-2">
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Vérification de votre éligibilité...
+                      Vérification de votre compte...
                     </p>
                   )}
-                  {!checkingEligibility && isEligibleForFree === true && (
-                    <p className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      Vous êtes éligible au document gratuit !
-                    </p>
+
+                  {/* Indicateur de pack (PRIORITÉ) */}
+                  {!checkingPack && packInfo && packInfo.documentsRemaining > 0 && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-700 font-medium flex items-center gap-2">
+                        <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Pack actif détecté !
+                      </p>
+                      <p className="text-sm text-blue-600 mt-1">
+                        Il vous reste <strong>{packInfo.documentsRemaining} document(s)</strong> dans votre pack.
+                      </p>
+                    </div>
                   )}
-                  {!checkingEligibility && isEligibleForFree === false && freeDocumentUsed && !packInfo && (
+
+                  {/* Indicateur gratuit (seulement si pas de pack) */}
+                  {!checkingEligibility && !checkingPack && isEligibleForFree === true && !packInfo && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-700 font-medium flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Vous êtes éligible au document gratuit !
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Message si gratuit déjà utilisé et pas de pack */}
+                  {!checkingEligibility && !checkingPack && isEligibleForFree === false && freeDocumentUsed && !packInfo && (
                     <p className="mt-2 text-sm text-orange-600">
                       Vous avez déjà utilisé votre document gratuit.
-                    </p>
-                  )}
-                  {/* Indicateur de pack */}
-                  {checkingPack && (
-                    <p className="mt-2 text-sm text-gray-500">Vérification de votre pack...</p>
-                  )}
-                  {!checkingPack && packInfo && packInfo.documentsRemaining > 0 && (
-                    <p className="mt-2 text-sm text-blue-600 font-medium flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      Vous avez un pack actif ({packInfo.documentsRemaining} doc. restants)
                     </p>
                   )}
                 </div>
