@@ -1,18 +1,26 @@
 // lib/prisma.ts
-// Note: Run `npx prisma generate` after setting up the database
+// Configuration pour Vercel Postgres avec Prisma Accelerate
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let PrismaClientConstructor: any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let withAccelerate: any
 
 try {
   // Essayer d'importer le client Prisma généré
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   PrismaClientConstructor = require('@prisma/client').PrismaClient
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  withAccelerate = require('@prisma/extension-accelerate').withAccelerate
 } catch {
   // Si Prisma n'est pas généré, créer un mock
   PrismaClientConstructor = class MockPrismaClient {
+    $extends() {
+      return this
+    }
     user = {
       findUnique: async () => null,
+      findMany: async () => [],
       update: async () => null,
       create: async () => null,
     }
@@ -35,15 +43,23 @@ try {
     verificationToken = {}
     organization = {}
   }
+  withAccelerate = () => ({})
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalForPrisma = globalThis as unknown as { prisma: any }
 
 function createPrismaClient() {
-  return new PrismaClientConstructor({
+  const client = new PrismaClientConstructor({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   })
+
+  // Utiliser Prisma Accelerate en production pour de meilleures performances
+  if (process.env.NODE_ENV === 'production' && withAccelerate) {
+    return client.$extends(withAccelerate())
+  }
+
+  return client
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
