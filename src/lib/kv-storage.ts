@@ -185,6 +185,8 @@ export async function createPack(
     const now = new Date()
     const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000) // 1 an
 
+    console.log(`[KV] Création pack pour email: ${normalizedEmail}, packId: ${packId}`)
+
     const packData: PackData = {
       email: normalizedEmail,
       documentsRemaining: documentsTotal,
@@ -197,15 +199,17 @@ export async function createPack(
 
     // Stocker le pack
     await kv.set(`${PACK_PREFIX}${packId}`, packData)
+    console.log(`[KV] Pack stocké: ${PACK_PREFIX}${packId}`)
 
     // Associer le pack à l'email de l'utilisateur
     const userPacks = await getUserPacks(normalizedEmail)
     userPacks.push(packId)
     await kv.set(`user-packs:${normalizedEmail}`, userPacks)
+    console.log(`[KV] Email associé au pack: user-packs:${normalizedEmail} = ${JSON.stringify(userPacks)}`)
 
     return packId
   } catch (error) {
-    console.error('Erreur KV createPack:', error)
+    console.error('[KV] Erreur createPack:', error)
     return null
   }
 }
@@ -214,10 +218,13 @@ export async function createPack(
 export async function getUserPacks(email: string): Promise<string[]> {
   try {
     const normalizedEmail = email.toLowerCase().trim()
-    const packs = await kv.get<string[]>(`user-packs:${normalizedEmail}`)
+    const key = `user-packs:${normalizedEmail}`
+    console.log(`[KV] Recherche packs pour clé: ${key}`)
+    const packs = await kv.get<string[]>(key)
+    console.log(`[KV] Packs trouvés:`, packs)
     return packs || []
   } catch (error) {
-    console.error('Erreur KV getUserPacks:', error)
+    console.error('[KV] Erreur getUserPacks:', error)
     return []
   }
 }

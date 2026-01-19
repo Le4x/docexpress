@@ -27,9 +27,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Email requis' }, { status: 400 })
     }
 
+    console.log(`[Pack API] Vérification pack pour email: ${email.toLowerCase().trim()}`)
+
     const activePack = await getActivePackForUser(email)
 
     if (activePack) {
+      console.log(`[Pack API] Pack trouvé: ${activePack.packId}, ${activePack.data.documentsRemaining} docs restants`)
       return NextResponse.json({
         hasPack: true,
         packId: activePack.packId,
@@ -40,9 +43,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    console.log(`[Pack API] Aucun pack actif trouvé pour: ${email}`)
     return NextResponse.json({ hasPack: false })
   } catch (error) {
-    console.error('Erreur vérification pack:', error)
+    console.error('[Pack API] Erreur vérification pack:', error)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
